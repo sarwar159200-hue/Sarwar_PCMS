@@ -45,9 +45,11 @@ jobs:
           # The .dna config must sit next to the renamed .xll with a matching name
           # (ExcelDnaPack is disabled, so it's no longer embedded as a resource).
           $dnaFile = Get-ChildItem -Path $binDir -Filter "*.dna" | Select-Object -First 1
-          if ($dnaFile) {
-            Copy-Item $dnaFile.FullName "$out\DLL Files\Sarwar_PCMS.dna" -Force
+          if (-not $dnaFile) {
+            Write-Error "No .dna file found in build output ($binDir) - the add-in will fail to load without it."
+            exit 1
           }
+          Copy-Item $dnaFile.FullName "$out\DLL Files\Sarwar_PCMS.dna" -Force
 
           # Copy every DLL from the build output (not a cherry-picked subset) -
           # Excel-DNA add-ins need their full dependency set (ExcelDna.Integration.dll,
