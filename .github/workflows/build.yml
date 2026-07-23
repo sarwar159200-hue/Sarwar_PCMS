@@ -28,41 +28,45 @@ jobs:
           msbuild $proj.FullName /p:Configuration=Release /p:Platform=x86
         shell: pwsh
 
-      - name: Assemble ready-to-install package (x86)
+      - name: Build (Release / x64)
+        run: |
+          $proj = Get-ChildItem -Path . -Recurse -Filter "*.vbproj" | Select-Object -First 1
+          msbuild $proj.FullName /p:Configuration=Release /p:Platform=x64
+        shell: pwsh
+
+      - name: Assemble ready-to-install package (both bitnesses)
         shell: pwsh
         run: |
           $out = "Sarwar_PCMS_Package"
-          New-Item -ItemType Directory -Path "$out\DLL Files" -Force | Out-Null
+          New-Item -ItemType Directory -Path "$out\DLL Files\x86" -Force | Out-Null
+          New-Item -ItemType Directory -Path "$out\DLL Files\x64" -Force | Out-Null
 
-          $binPath = Get-ChildItem -Path . -Recurse -Filter "Sarwar_PCMS*AddIn.xll" | Select-Object -First 1
-          if (-not $binPath) {
-            $binPath = Get-ChildItem -Path . -Recurse -Filter "*.xll" | Where-Object { $_.Name -notlike "*AddIn64*" } | Select-Object -First 1
+          function Assemble-Bitness($platformFolder, $xllPattern, $destFolder) {
+            $binPath = Get-ChildItem -Path "." -Recurse -Filter $xllPattern |
+              Where-Object { $_.FullName -like "*\$platformFolder\*" } | Select-Object -First 1
+            if (-not $binPath) {
+              Write-Error "Could not find $xllPattern under a $platformFolder build output folder."
+              exit 1
+            }
+            Copy-Item $binPath.FullName "$destFolder\Sarwar_PCMS.xll" -Force
+            $binDir = $binPath.DirectoryName
+
+            $dnaFile = Get-ChildItem -Path $binDir -Filter "*.dna" | Select-Object -First 1
+            if (-not $dnaFile) {
+              Write-Error "No .dna file found in $binDir"
+              exit 1
+            }
+            Copy-Item $dnaFile.FullName "$destFolder\Sarwar_PCMS.dna" -Force
+
+            Get-ChildItem -Path $binDir -Filter "*.dll" | Copy-Item -Destination "$destFolder\" -Force
+
+            if (Test-Path "$binDir\runtimes") {
+              Copy-Item "$binDir\runtimes" "$destFolder\runtimes" -Recurse -Force
+            }
           }
-          if (-not $binPath) {
-            $binPath = Get-ChildItem -Path . -Recurse -Filter "*.xll" | Select-Object -First 1
-          }
-          Copy-Item $binPath.FullName "$out\DLL Files\Sarwar_PCMS.xll" -Force
 
-          $binDir = $binPath.DirectoryName
-
-          # The .dna config must sit next to the renamed .xll with a matching name
-          # (ExcelDnaPack is disabled, so it's no longer embedded as a resource).
-          $dnaFile = Get-ChildItem -Path $binDir -Filter "*.dna" | Select-Object -First 1
-          if (-not $dnaFile) {
-            Write-Error "No .dna file found in build output ($binDir) - the add-in will fail to load without it."
-            exit 1
-          }
-          Copy-Item $dnaFile.FullName "$out\DLL Files\Sarwar_PCMS.dna" -Force
-
-          # Copy every DLL from the build output (not a cherry-picked subset) -
-          # Excel-DNA add-ins need their full dependency set (ExcelDna.Integration.dll,
-          # Microsoft.Office.Interop.Excel.dll, System.Data.SQLite.dll, etc.) sitting
-          # loose next to the .xll since we disabled single-file packing.
-          Get-ChildItem -Path $binDir -Filter "*.dll" | Copy-Item -Destination "$out\DLL Files\" -Force
-
-          if (Test-Path "$binDir\runtimes") {
-            Copy-Item "$binDir\runtimes" "$out\DLL Files\runtimes" -Recurse -Force
-          }
+          Assemble-Bitness "x86" "Sarwar_PCMS*AddIn.xll" "$out\DLL Files\x86"
+          Assemble-Bitness "x64" "Sarwar_PCMS*AddIn64.xll" "$out\DLL Files\x64"
 
           Copy-Item "Install.bat" "$out\" -Force
           Copy-Item "Uninstall.bat" "$out\" -Force
