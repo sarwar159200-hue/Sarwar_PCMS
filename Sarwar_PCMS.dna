@@ -1,5 +1,5 @@
 <DnaLibrary Name="Sarwar PCMS" RuntimeVersion="v4.0" Language="Visual Basic">
-  <ExternalLibrary Path="Sarwar_PCMS.dll" LoadFromBytes="true" Pack="true" />
+  <ExternalLibrary Path="Sarwar_PCMS.dll" LoadFromBytes="true" Pack="false" />
   <CustomUI>
     <![CDATA[
       <!-- Ribbon.xml is loaded via IRibbonExtensibility in RibbonController.vb -->
