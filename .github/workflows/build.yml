@@ -22,19 +22,22 @@ jobs:
           nuget restore $proj.FullName
         shell: pwsh
 
-      - name: Build (Release / x64)
+      - name: Build (Release / x86)
         run: |
           $proj = Get-ChildItem -Path . -Recurse -Filter "*.vbproj" | Select-Object -First 1
-          msbuild $proj.FullName /p:Configuration=Release /p:Platform=x64
+          msbuild $proj.FullName /p:Configuration=Release /p:Platform=x86
         shell: pwsh
 
-      - name: Assemble ready-to-install package
+      - name: Assemble ready-to-install package (x86)
         shell: pwsh
         run: |
           $out = "Sarwar_PCMS_Package"
           New-Item -ItemType Directory -Path "$out\DLL Files" -Force | Out-Null
 
-          $binPath = Get-ChildItem -Path . -Recurse -Filter "Sarwar_PCMS*AddIn64.xll" | Select-Object -First 1
+          $binPath = Get-ChildItem -Path . -Recurse -Filter "Sarwar_PCMS*AddIn.xll" | Select-Object -First 1
+          if (-not $binPath) {
+            $binPath = Get-ChildItem -Path . -Recurse -Filter "*.xll" | Where-Object { $_.Name -notlike "*AddIn64*" } | Select-Object -First 1
+          }
           if (-not $binPath) {
             $binPath = Get-ChildItem -Path . -Recurse -Filter "*.xll" | Select-Object -First 1
           }
