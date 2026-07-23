@@ -29,8 +29,9 @@ if not exist "%SOURCE_XLL%" (
 )
 
 :: ============================================================
-::  STEP 1 - Create Folders
+::  STEP 1 - Create Folders (clean any stale leftover install first)
 :: ============================================================
+if exist "%INSTALL_DIR%" rd /s /q "%INSTALL_DIR%" >nul 2>&1
 if not exist "%INSTALL_DIR%"        mkdir "%INSTALL_DIR%"       >nul 2>&1
 
 :: ============================================================
@@ -49,6 +50,9 @@ if %ERRORLEVEL% neq 0 (
 :: ============================================================
 if exist "%SOURCE_DIR%\*.dll" (
     copy /y "%SOURCE_DIR%\*.dll" "%INSTALL_DIR%\" >nul 2>&1
+)
+if exist "%SOURCE_DIR%\*.dna" (
+    copy /y "%SOURCE_DIR%\*.dna" "%INSTALL_DIR%\" >nul 2>&1
 )
 if exist "%SOURCE_DIR%\runtimes" (
     if not exist "%INSTALL_DIR%\runtimes" mkdir "%INSTALL_DIR%\runtimes" >nul 2>&1
