@@ -8,6 +8,7 @@
     <Platforms>x64;x86</Platforms>
     <LangVersion>latest</LangVersion>
     <UseWindowsForms>true</UseWindowsForms>
+    <ExcelDnaPack>false</ExcelDnaPack>
   </PropertyGroup>
 
   <ItemGroup>
