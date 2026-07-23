@@ -1,0 +1,58 @@
+name: Build Sarwar PCMS
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        run: |
+          $proj = Get-ChildItem -Path . -Recurse -Filter "*.vbproj" | Select-Object -First 1
+          nuget restore $proj.FullName
+        shell: pwsh
+
+      - name: Build (Release / x64)
+        run: |
+          $proj = Get-ChildItem -Path . -Recurse -Filter "*.vbproj" | Select-Object -First 1
+          msbuild $proj.FullName /p:Configuration=Release /p:Platform=x64
+        shell: pwsh
+
+      - name: Assemble ready-to-install package
+        shell: pwsh
+        run: |
+          $out = "Sarwar_PCMS_Package"
+          New-Item -ItemType Directory -Path "$out\DLL Files" -Force | Out-Null
+
+          $binPath = Get-ChildItem -Path . -Recurse -Filter "Sarwar_PCMS*AddIn64.xll" | Select-Object -First 1
+          if (-not $binPath) {
+            $binPath = Get-ChildItem -Path . -Recurse -Filter "*.xll" | Select-Object -First 1
+          }
+          Copy-Item $binPath.FullName "$out\DLL Files\Sarwar_PCMS.xll" -Force
+
+          $binDir = $binPath.DirectoryName
+          Copy-Item "$binDir\Sarwar_PCMS.dll" "$out\DLL Files\" -Force -ErrorAction SilentlyContinue
+          Copy-Item "$binDir\System.Data.SQLite.dll" "$out\DLL Files\" -Force -ErrorAction SilentlyContinue
+          if (Test-Path "$binDir\runtimes") {
+            Copy-Item "$binDir\runtimes" "$out\DLL Files\runtimes" -Recurse -Force
+          }
+
+          Copy-Item "Install.bat" "$out\" -Force
+          Copy-Item "Uninstall.bat" "$out\" -Force
+          Copy-Item "README.md" "$out\" -Force -ErrorAction SilentlyContinue
+
+      - name: Upload ready-to-install package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sarwar_PCMS_Ready_To_Install
+          path: Sarwar_PCMS_Package/
