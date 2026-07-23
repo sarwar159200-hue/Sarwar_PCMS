@@ -1,0 +1,49 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" onLoad="OnRibbonLoad">
+  <ribbon>
+    <tabs>
+      <tab id="tabPCMS" label="Sarwar PCMS">
+        <group id="grpPane" label="Panel">
+          <toggleButton id="btnTogglePane"
+                        label="Task Pane"
+                        size="large"
+                        imageMso="TaskPane"
+                        onAction="OnTogglePane"
+                        getPressed="GetPaneVisible"
+                        screentip="Open/Close Sarwar PCMS"
+                        supertip="Show or hide the Sarwar PCMS task pane for data entry and review." />
+        </group>
+        <group id="grpActions" label="Data">
+          <button id="btnRefresh" label="Refresh Sheet Data" size="large" imageMso="RefreshAll"
+                  onAction="OnRefreshData"
+                  supertip="Recalculate PCMS custom fields on the active sheet." />
+          <button id="btnValidate" label="Validate Schedule" size="large" imageMso="ReviewCheckContactNames"
+                  onAction="OnValidate"
+                  supertip="Run DCMA-style schedule/EVM checks on the active sheet (dates, float, logic, variances, % complete)." />
+          <button id="btnExport" label="Export Findings" size="large" imageMso="ExportExcel"
+                  onAction="OnExportValidation"
+                  supertip="Write all validation findings to a new PCMS_Validation sheet." />
+        </group>
+        <group id="grpHistory" label="History (SQLite)">
+          <button id="btnSaveSnapshot" label="Save Snapshot" size="large" imageMso="FileSave"
+                  onAction="OnSaveSnapshot"
+                  supertip="Save the active sheet's schedule/EVM data and validation findings to the local Sarwar PCMS database." />
+          <button id="btnLoadSnapshot" label="Load Last Snapshot" size="large" imageMso="FileOpen"
+                  onAction="OnLoadLastSnapshot"
+                  supertip="Load the most recently saved snapshot into a new sheet for comparison." />
+        </group>
+        <group id="grpAnalysis" label="Analysis">
+          <button id="btnDashboard" label="Build EVM Dashboard" size="large" imageMso="ChartInsertColumn"
+                  onAction="OnBuildDashboard"
+                  supertip="Generate an S-curve chart (cumulative PV/EV/AC) and headline SPI/CPI on a new sheet." />
+          <button id="btnHighlight" label="Highlight Critical Path" size="large" imageMso="FillColorPicker"
+                  onAction="OnHighlightCritical"
+                  supertip="Color rows red (critical, float&#8804;0) or yellow (near-critical, float&#8804;5 days) based on Total Float." />
+        </group>
+        <group id="grpAbout" label="About">
+          <button id="btnAbout" label="About" size="large" imageMso="Info"
+                  onAction="OnAbout" />
+        </group>
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>
