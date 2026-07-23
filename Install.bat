@@ -3,9 +3,24 @@ setlocal EnableDelayedExpansion
 
 set "ADDIN_NAME=Sarwar_PCMS"
 set "ADDIN_FILE=Sarwar_PCMS.xll"
-set "SOURCE_DIR=DLL Files"
-set "SOURCE_XLL=%SOURCE_DIR%\Sarwar_PCMS.xll"
 set "INSTALL_DIR=%USERPROFILE%\Documents\Sarwar_PCMS"
+
+:: ============================================================
+::  DETECT EXCEL BITNESS
+::  32-bit Office on 64-bit Windows registers under Wow6432Node.
+::  If that key exists, Office is 32-bit; otherwise treat as 64-bit.
+:: ============================================================
+set "SOURCE_DIR=DLL Files\x64"
+reg query "HKLM\SOFTWARE\Wow6432Node\Microsoft\Office\16.0\Excel\InstallRoot" >nul 2>&1
+if %ERRORLEVEL%==0 set "SOURCE_DIR=DLL Files\x86"
+
+:: On a 32-bit Windows machine (no Wow6432Node at all), Office there is always 32-bit
+reg query "HKLM\SOFTWARE\Wow6432Node" >nul 2>&1
+if %ERRORLEVEL% neq 0 set "SOURCE_DIR=DLL Files\x86"
+
+if not exist "%SOURCE_DIR%" set "SOURCE_DIR=DLL Files\x86"
+
+set "SOURCE_XLL=%SOURCE_DIR%\Sarwar_PCMS.xll"
 
 :: ============================================================
 ::  PRE-CHECK - Excel Running?
