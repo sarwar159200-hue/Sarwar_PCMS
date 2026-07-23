@@ -41,8 +41,20 @@ jobs:
           Copy-Item $binPath.FullName "$out\DLL Files\Sarwar_PCMS.xll" -Force
 
           $binDir = $binPath.DirectoryName
-          Copy-Item "$binDir\Sarwar_PCMS.dll" "$out\DLL Files\" -Force -ErrorAction SilentlyContinue
-          Copy-Item "$binDir\System.Data.SQLite.dll" "$out\DLL Files\" -Force -ErrorAction SilentlyContinue
+
+          # The .dna config must sit next to the renamed .xll with a matching name
+          # (ExcelDnaPack is disabled, so it's no longer embedded as a resource).
+          $dnaFile = Get-ChildItem -Path $binDir -Filter "*.dna" | Select-Object -First 1
+          if ($dnaFile) {
+            Copy-Item $dnaFile.FullName "$out\DLL Files\Sarwar_PCMS.dna" -Force
+          }
+
+          # Copy every DLL from the build output (not a cherry-picked subset) -
+          # Excel-DNA add-ins need their full dependency set (ExcelDna.Integration.dll,
+          # Microsoft.Office.Interop.Excel.dll, System.Data.SQLite.dll, etc.) sitting
+          # loose next to the .xll since we disabled single-file packing.
+          Get-ChildItem -Path $binDir -Filter "*.dll" | Copy-Item -Destination "$out\DLL Files\" -Force
+
           if (Test-Path "$binDir\runtimes") {
             Copy-Item "$binDir\runtimes" "$out\DLL Files\runtimes" -Recurse -Force
           }
