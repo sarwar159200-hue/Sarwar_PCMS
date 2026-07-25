@@ -33,6 +33,12 @@ jobs:
           Get-ChildItem -Path . -Recurse -Directory -Filter "obj" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
         shell: pwsh
 
+      - name: Restore NuGet packages (again, after clean)
+        run: |
+          $proj = Get-ChildItem -Path . -Recurse -Filter "*.vbproj" | Select-Object -First 1
+          nuget restore $proj.FullName
+        shell: pwsh
+
       - name: Build (Release / x64)
         run: |
           $proj = Get-ChildItem -Path . -Recurse -Filter "*.vbproj" | Select-Object -First 1
