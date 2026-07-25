@@ -41,11 +41,14 @@ jobs:
           New-Item -ItemType Directory -Path "$out\DLL Files\x86" -Force | Out-Null
           New-Item -ItemType Directory -Path "$out\DLL Files\x64" -Force | Out-Null
 
-          function Assemble-Bitness($platformFolder, $xllPattern, $destFolder) {
-            $binPath = Get-ChildItem -Path "." -Recurse -Filter $xllPattern |
-              Where-Object { $_.FullName -like "*\$platformFolder\*" } | Select-Object -First 1
+          function Assemble-Bitness($xllPattern, $excludePattern, $destFolder) {
+            $candidates = Get-ChildItem -Path "." -Recurse -Filter $xllPattern
+            if ($excludePattern) {
+              $candidates = $candidates | Where-Object { $_.Name -notlike $excludePattern }
+            }
+            $binPath = $candidates | Select-Object -First 1
             if (-not $binPath) {
-              Write-Error "Could not find $xllPattern under a $platformFolder build output folder."
+              Write-Error "Could not find a file matching $xllPattern anywhere in the build output."
               exit 1
             }
             Copy-Item $binPath.FullName "$destFolder\Sarwar_PCMS.xll" -Force
@@ -65,8 +68,10 @@ jobs:
             }
           }
 
-          Assemble-Bitness "x86" "Sarwar_PCMS*AddIn.xll" "$out\DLL Files\x86"
-          Assemble-Bitness "x64" "Sarwar_PCMS*AddIn64.xll" "$out\DLL Files\x64"
+          # 64-bit build's xll ends in "AddIn64.xll" - unambiguous, match it directly.
+          Assemble-Bitness "*AddIn64.xll" $null "$out\DLL Files\x64"
+          # 32-bit build's xll ends in "AddIn.xll" but NOT "AddIn64.xll" - exclude that overlap.
+          Assemble-Bitness "*AddIn.xll" "*AddIn64.xll" "$out\DLL Files\x86"
 
           Copy-Item "Install.bat" "$out\" -Force
           Copy-Item "Uninstall.bat" "$out\" -Force
