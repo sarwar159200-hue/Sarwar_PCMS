@@ -28,10 +28,21 @@ jobs:
           msbuild $proj.FullName /p:Configuration=Release /p:Platform=x86
         shell: pwsh
 
+      - name: Clean intermediate files before second build
+        run: |
+          Get-ChildItem -Path . -Recurse -Directory -Filter "obj" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+        shell: pwsh
+
       - name: Build (Release / x64)
         run: |
           $proj = Get-ChildItem -Path . -Recurse -Filter "*.vbproj" | Select-Object -First 1
-          msbuild $proj.FullName /p:Configuration=Release /p:Platform=x64
+          msbuild $proj.FullName /p:Configuration=Release /p:Platform=x64 /t:Rebuild
+        shell: pwsh
+
+      - name: List all build outputs (debug)
+        run: |
+          Write-Host "All .xll files found:"
+          Get-ChildItem -Path . -Recurse -Filter "*.xll" | ForEach-Object { Write-Host $_.FullName }
         shell: pwsh
 
       - name: Assemble ready-to-install package (both bitnesses)
