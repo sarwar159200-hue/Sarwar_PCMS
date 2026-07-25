@@ -58,14 +58,12 @@ jobs:
           New-Item -ItemType Directory -Path "$out\DLL Files\x86" -Force | Out-Null
           New-Item -ItemType Directory -Path "$out\DLL Files\x64" -Force | Out-Null
 
-          function Assemble-Bitness($xllPattern, $excludePattern, $destFolder) {
-            $candidates = Get-ChildItem -Path "." -Recurse -Filter $xllPattern
-            if ($excludePattern) {
-              $candidates = $candidates | Where-Object { $_.Name -notlike $excludePattern }
-            }
-            $binPath = $candidates | Select-Object -First 1
+          function Assemble-Bitness($xllPattern, $pathMustContain, $destFolder) {
+            $binPath = Get-ChildItem -Path "." -Recurse -Filter $xllPattern |
+              Where-Object { $_.FullName -like "*$pathMustContain*" -and $_.FullName -notlike "*\publish\*" } |
+              Select-Object -First 1
             if (-not $binPath) {
-              Write-Error "Could not find a file matching $xllPattern anywhere in the build output."
+              Write-Error "Could not find $xllPattern under a path containing '$pathMustContain' (excluding publish/packed variants)."
               exit 1
             }
             Copy-Item $binPath.FullName "$destFolder\Sarwar_PCMS.xll" -Force
@@ -85,10 +83,10 @@ jobs:
             }
           }
 
-          # 64-bit build's xll ends in "AddIn64.xll" - unambiguous, match it directly.
-          Assemble-Bitness "*AddIn64.xll" $null "$out\DLL Files\x64"
-          # 32-bit build's xll ends in "AddIn.xll" but NOT "AddIn64.xll" - exclude that overlap.
-          Assemble-Bitness "*AddIn.xll" "*AddIn64.xll" "$out\DLL Files\x86"
+          # 64-bit: file is named Sarwar_PCMS64.xll (unpacked, in bin\x64\...)
+          Assemble-Bitness "Sarwar_PCMS64.xll" "\x64\" "$out\DLL Files\x64"
+          # 32-bit: file is named Sarwar_PCMS.xll (unpacked, in bin\x86\...)
+          Assemble-Bitness "Sarwar_PCMS.xll" "\x86\" "$out\DLL Files\x86"
 
           Copy-Item "Install.bat" "$out\" -Force
           Copy-Item "Uninstall.bat" "$out\" -Force
